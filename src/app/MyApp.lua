@@ -13,6 +13,12 @@ function MyApp:enterMainMenuScene()
     MyApp:toScene(scene)
 end
 
+-- 首页界面
+function MyApp:enterIndexScene()
+    local scene = require("app.scenes.IndexScene"):createScene()
+    MyApp:toScene(scene)
+end
+
 isEnter = false
 -- 场景跳转方法
 function MyApp:toScene(scene)

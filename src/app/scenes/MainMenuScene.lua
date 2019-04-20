@@ -3,7 +3,8 @@ local MainMenuScene = class("MainMenuScene", function()
 end)
 
 function MainMenuScene:ctor()
-    print("MainMenuScene:ctor -- ")
+    print("MainMenuScene:ctor -- ")    
+    isEnter = false
 end
 
 -- 创建场景
@@ -14,12 +15,12 @@ function MainMenuScene:createScene()
 end
 
 -- 初始化
-function MainMenuScene:init()
+function MainMenuScene:init()    
     print("MainMenuScene:init -- ")
 
     -- 添加MainMenuLayer层
-    local layer = require("app.layers.MainMenuLayer"):create()
-    self:addChild(layer) 
+    local MainMenuLayer = require("app.layers.MainMenuLayer"):create()
+    self:addChild(MainMenuLayer) 
 end
 
 return MainMenuScene

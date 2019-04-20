@@ -4,6 +4,8 @@ end)
 
 require "config"
 
+local visible = cc.Director:getInstance():getVisibleSize()
+
 function MainMenuLayer:ctor()
     print("MainMenuLayer:ctor -- ")
 end
@@ -64,14 +66,39 @@ function MainMenuLayer:init()
     local isLoading = false 
     local currentRes = 0
 
+    -- 加载精灵帧缓存
     local function loaded(texture)
         cc.SpriteFrameCache:getInstance():addSpriteFrames(resFiles[currentRes])
         isLoading = false 
     end
 
+    -- 加载纹理缓存
     local function load(configFilePath)
         isLoading = true
         cc.Director:getInstance():getTextureCache():addImageAsync(configFilePath, loaded)
+    end
+    
+    -- 获取动画函数
+    local function getAnimationByName(animName, delay, animNum)
+        local animation = cc.Animation:create()
+
+        for i=1,animNum do
+            local frameName = string.format(animName..i..".png")
+            print("frameName: ".. frameName)
+            local frame = cc.SpriteFrameCache:getInstance():getSpriteFrame(frameName)
+            animation:addSpriteFrame(frame)
+        end
+
+        animation:setDelayPerUnit(delay)
+        animation:setRestoreOriginalFrame(true)
+
+        return animation
+    end
+    
+    -- 加载动画缓存
+    local function loadAnimationCache()
+        local animation_hero_0 = getAnimationByName("hero", 0.1, 2)
+        cc.AnimationCache:getInstance():addAnimation(animation_hero_0, "ANIMATION_HERO_0")
     end
 
     -- 可以在此加载游戏资源
@@ -82,16 +109,31 @@ function MainMenuLayer:init()
         currentRes = currentRes + 1
         if currentRes > #resImages then
             self:unscheduleUpdate()
+            loadAnimationCache()
+
             loading_sprite:stopAllActions()
             loading_sprite:setVisible(false)
+
+            -- 飞机动画
+            local sprite = cc.Sprite:createWithSpriteFrameName("hero1.png")
+            sprite:setPosition(cc.p(visible.width / 2, visible.height / 2))
+            self:addChild(sprite)
+            local animation = cc.AnimationCache:getInstance():getAnimation("ANIMATION_HERO_0")
+            local animate = cc.Animate:create(animation)
+            sprite:runAction(cc.RepeatForever:create(animate))
+
             start_button:setVisible(true)
+            start_button:addClickEventListener(function(sender)
+                print("start game")
+                MyApp:enterIndexScene()
+            end)
             return 
         end
-        load(resImages[currentRes])
+        load(resImages[currentRes])        
     end
 
     local function loadGameRes()
-        self:scheduleUpdateWithPriorityLua(update, 0)
+        self:scheduleUpdateWithPriorityLua(update, 0)        
     end
 
 
@@ -113,8 +155,6 @@ function MainMenuLayer:init()
         end
     end
 
-
-
     -- 正在更新
     local function startUpdate()
         local rootNodeUpdate = cc.CSLoader:createNode("MainMenuUpdate.csb")
@@ -134,6 +174,8 @@ function MainMenuLayer:init()
 
         local cancel_button = ccui.Helper:seekWidgetByName(rootUpdate, "cancel_button")
         cancel_button:addClickEventListener(function(sender)
+            local scheduler = cc.Director:getInstance():getScheduler()
+            scheduler:unscheduleScriptEntry(self.scheduleScriptEntryID)
             rootNodeUpdate:removeFromParent()
             print("cancel") 
         end)
@@ -168,7 +210,7 @@ function MainMenuLayer:init()
         end
 
         local scheduler = cc.Director:getInstance():getScheduler()
-        self.scheduleScriptEntryID = scheduler:scheduleScriptFunc(function(dt)
+            self.scheduleScriptEntryID = scheduler:scheduleScriptFunc(function(dt)
             loadingbarUpdate(dt)
         end, 0.1, false)
 
